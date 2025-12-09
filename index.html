@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alien Hunter</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000 url('background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Overlays (Menu, Armory) */
+        #menu-overlay,
+        #armory-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 60px;
+            color: #0ff;
+            text-shadow: 0 0 20px #00f, 0 0 40px #0ff;
+            margin-bottom: 40px;
+            letter-spacing: 5px;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #0ff;
+            color: #0ff;
+            padding: 15px 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin: 15px;
+            cursor: pointer;
+            text-shadow: 0 0 10px #0ff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 30px #0ff;
+            transform: scale(1.05);
+        }
+
+        /* HUD */
+        #cockpit-dashboard {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+        }
+
+        .panel-left {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+        }
+
+        .panel-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            position: relative;
+            transform: skewX(-20deg);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.2s;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #health-bar-fill {
+            background: #f00;
+            box-shadow: 0 0 10px #f00;
+        }
+
+        #energy-bar-fill {
+            background: #0ff;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        .bar-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            font-size: 12px;
+            color: #aaa;
+            transform: skewX(20deg);
+        }
+
+        #score-display {
+            font-size: 42px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            font-weight: bold;
+        }
+
+        #currency-display {
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 0 0 5px #ffd700;
+        }
+
+        /* Armory Grid */
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin-bottom: 30px;
+        }
+
+        .upgrade-card {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0ff;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .upgrade-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .upgrade-card h3 {
+            color: #0ff;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+
+        .stat-val,
+        .cost-val {
+            font-size: 16px;
+            margin: 5px 0;
+            color: #aaa;
+        }
+
+        .buy-btn {
+            margin-top: 15px;
+            padding: 10px 30px;
+            font-size: 16px;
+        }
+
+        .currency-display-lg {
+            font-size: 32px;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        #level-announcement {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            color: #fff;
+            text-shadow: 0 0 30px #0ff;
+            pointer-events: none;
+            z-index: 50;
+            animation: fadeOut 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="game-canvas"></canvas>
+    <div id="ui-layer">
+        <!-- Main Menu -->
+        <div id="menu-overlay">
+            <h1>ALIEN HUNTER</h1>
+            <button id="start-btn">INITIALIZE</button>
+            <button id="upgrade-btn">ARMORY</button>
+        </div>
+
+        <!-- Armory -->
+        <div id="armory-overlay" class="hidden">
+            <h1>ARMORY</h1>
+            <div class="upgrade-grid">
+                <!-- Hull -->
+                <div class="upgrade-card">
+                    <h3>HULL PLATING</h3>
+                    <p class="desc">Increases Max Health</p>
+                    <div class="stat-val">Level: <span id="lvl-hull">1</span></div>
+                    <div class="cost-val">Cost: <span id="cost-hull">100</span></div>
+                    <button class="buy-btn" data-type="hull">UPGRADE</button>
+                </div>
+                <!-- Engine -->
+                <div class="upgrade-card">
+                    <h3>ION THRUSTERS</h3>
+                    <p class="desc">Increases Ship Speed</p>
+                    <div class="stat-val">Level: <span id="lvl-engine">1</span></div>
+                    <div class="cost-val">Cost: <span id="cost-engine">150</span></div>
+                    <button class="buy-btn" data-type="engine">UPGRADE</button>
+                </div>
+                <!-- Cannon -->
+                <div class="upgrade-card">
+                    <h3>PLASMA CANNON</h3>
+                    <p class="desc">Increases Damage</p>
+                    <div class="stat-val">Level: <span id="lvl-cannon">1</span></div>
+                    <div class="cost-val">Cost: <span id="cost-cannon">200</span></div>
+                    <button class="buy-btn" data-type="cannon">UPGRADE</button>
+                </div>
+                <!-- Cooldown -->
+                <div class="upgrade-card">
+                    <h3>COOLING SYS</h3>
+                    <p class="desc">Increases Fire Rate</p>
+                    <div class="stat-val">Level: <span id="lvl-cooldown">1</span></div>
+                    <div class="cost-val">Cost: <span id="cost-cooldown">250</span></div>
+                    <button class="buy-btn" data-type="cooldown">UPGRADE</button>
+                </div>
+                <!-- Ricochet -->
+                <div class="upgrade-card">
+                    <h3>RICOCHET</h3>
+                    <p class="desc">Projectiles bounce off enemies</p>
+                    <div class="stat-val">Level: <span id="lvl-ricochet">0</span></div>
+                    <div class="cost-val">Cost: <span id="cost-ricochet">500</span></div>
+                    <button class="buy-btn" data-type="ricochet">UPGRADE</button>
+                </div>
+                <!-- Multishot -->
+                <div class="upgrade-card">
+                    <h3>MULTISHOT</h3>
+                    <p class="desc">Fire more projectiles</p>
+                    <div class="stat-val">Level: <span id="lvl-multishot">0</span></div>
+                    <div class="cost-val">Cost: <span id="cost-multishot">1000</span></div>
+                    <button class="buy-btn" data-type="multishot">UPGRADE</button>
+                </div>
+                <!-- Crit Chance -->
+                <div class="upgrade-card">
+                    <h3>CRIT CHANCE</h3>
+                    <p class="desc">Chance for double damage</p>
+                    <div class="stat-val">Level: <span id="lvl-critChance">0</span></div>
+                    <div class="cost-val">Cost: <span id="cost-critChance">300</span></div>
+                    <button class="buy-btn" data-type="critChance">UPGRADE</button>
+                </div>
+                <!-- All Damage -->
+                <div class="upgrade-card">
+                    <h3>AMPLIFIER</h3>
+                    <p class="desc">Global Damage Multiplier</p>
+                    <div class="stat-val">Level: <span id="lvl-allDamage">0</span></div>
+                    <div class="cost-val">Cost: <span id="cost-allDamage">800</span></div>
+                    <button class="buy-btn" data-type="allDamage">UPGRADE</button>
+                </div>
+            </div>
+            <div class="currency-display-lg" id="armory-currency">CREDITS: 0</div>
+            <button id="armory-back-btn">RETURN</button>
+        </div>
+
+        <!-- Level Announcement -->
+        <div id="level-announcement" class="hidden">STAGE 1</div>
+
+        <!-- HUD -->
+        <div id="cockpit-dashboard" class="hidden">
+            <div class="panel-left">
+                <div id="level-display" style="color: #0ff; font-size: 20px; margin-bottom: 5px;">LEVEL 1 - STAGE 1
+                </div>
+                <div id="progress-display" style="font-size: 14px; color: #aaa; margin-bottom: 10px;">ENEMIES: 0/10
+                </div>
+                <div class="bar-container">
+                    <div id="health-bar-fill" class="bar-fill"></div>
+                    <div class="bar-label">HULL INTEGRITY</div>
+                </div>
+                <div class="bar-container">
+                    <div id="energy-bar-fill" class="bar-fill"></div>
+                    <div class="bar-label">ENERGY</div>
+                </div>
+            </div>
+            <div class="panel-center">
+                <div id="score-display">000000</div>
+                <div id="currency-display">CREDITS: 0</div>
+            </div>
+            <div class="panel-right">
+                <!-- Empty for now, powerups removed -->
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
