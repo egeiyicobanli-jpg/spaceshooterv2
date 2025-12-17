@@ -8,31 +8,32 @@ export class InputHandler {
             right: false
         };
 
-        window.addEventListener('keydown', (e) => {
+        this.canvas.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
         });
 
-        window.addEventListener('keyup', (e) => {
+        this.canvas.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
         });
 
-        window.addEventListener('mousemove', (e) => {
+        this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
             this.mouse.y = e.clientY - rect.top;
         });
 
-        window.addEventListener('mousedown', (e) => {
+        this.canvas.addEventListener('mousedown', (e) => {
             if (e.button === 0) this.mouseButtons.left = true;
             if (e.button === 2) this.mouseButtons.right = true;
         });
 
-        window.addEventListener('mouseup', (e) => {
+        this.canvas.addEventListener('mouseup', (e) => {
             if (e.button === 0) this.mouseButtons.left = false;
             if (e.button === 2) this.mouseButtons.right = false;
         });
 
         // Prevent context menu on right click
-        window.addEventListener('contextmenu', (e) => e.preventDefault());
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 }
+
