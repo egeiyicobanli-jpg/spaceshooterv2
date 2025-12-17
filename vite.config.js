@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    base: './', // Use relative paths for assets
+    base: '/spaceshooterv2/',
     build: {
         outDir: 'dist',
         assetsDir: 'assets',
     }
 });
+
